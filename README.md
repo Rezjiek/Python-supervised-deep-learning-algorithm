@@ -1,3 +1,3 @@
 # Python-supervised-deep-learning-algorithm
 
-Nothing for now
+Read the word document for all equations.
