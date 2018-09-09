@@ -70,7 +70,7 @@ class Network:
     dz = np.array([np.zeros((i)) for i in self.shape[1:]])
 
     t = 0
-    a[0] = self.xs[0]
+    a[0] = self.xs[n]
     for w,b in zip(self.ws,self.bs):
       t += 1
       a[t] = sig(w@a[t-1]+b)
@@ -84,24 +84,28 @@ class Network:
   def gradient(self,n):
     a,dz = self.create_partials(n)
 
+
     dc_dx = np.array([np.zeros((i)) for i in self.shape])
     max_L = len(self.shape)-1
 
 
-    for i in range(len(dc_dx[max_L])):
-      dc_dx[max_L][i] = 2*(a[max_L][i]-self.ys[n][i][0])
+    for i,j in zip(self.neur_sum(self.xs[n]),self.ys[n]):
+      dc_dx[max_L] = 2*(i-j)
 
 
-    for L in range(max_L,0,-1):
-      for t in range(len(dc_dx[L-1])):
+    for L in range(max_L-1,-1,-1):
 
-        dc_dx[L-1][t] = sum([ dc_dx[L][k]*dz[L-1][k]*self.ws[L-1][k][t] for k in range( len(dc_dx[L]) )])
+      for row in range(self.shape[L]):
 
-      for row in range(len(self.b_grad[L-1])):
-        self.b_grad[L-1][row][0] = dc_dx[L][row]*dz[L-1][row]
+        dc_dx[L][row] = sum([dc_dx[L+1][t]*dz[L][t]*self.ws[L][t][row] for t in range(self.shape[L+1])])
 
-        for col in range(len(self.w_grad[L-1][row])):
-          self.w_grad[L-1][row][col] = self.b_grad[L-1][row][0]*a[L-1][col]
+      for row in range(self.shape[L+1]):
+        self.b_grad[L][row][0] = dc_dx[L+1][row]*dz[L][row]
+
+        for col in range(self.shape[L]):
+          self.w_grad[L][row][col] = self.b_grad[L][row][0]*a[L][col]
+
+
 
     return self.w_grad,self.b_grad
 
@@ -111,17 +115,58 @@ class Network:
   def lower_cost(self,loops):
     c = 1
 
+    out_cost = []
     for i in range(loops):
+      w,b = 0,0
+      sum_cost = 0
       for n in range(len(self.xs)):
-        w,b = c*self.gradient(n)
-        self.ws -= w
-        self.bs -= b
+        sum_cost += k.cost(n)
+        w0,b0 = self.gradient(n)
+        w,b = w+w0,b+b0
 
-    return self.ws,self.bs
+      out_cost.append(sum_cost)
+      self.ws -= c*w
+      self.bs -= c*b
+
+    return out_cost
 
 
+def img_to_array(img):
+
+  out = []
+  for i,j in np.ndenumerate(img):
+    out.append([j])
+
+  return np.array(out)
 
 
+def all_data(all_urls):
+  out = []
+  for i in all_urls:
+    out.append(img_to_array(plt.imread(i)[:,:,0]))
+
+  return out
+
+
+urls = [
+"C:/Users/Midas/Documents/programmeren/School/Python-supervised-deep-learning-algorithm-master/empty.png",
+"C:/Users/Midas/Documents/programmeren/School/Python-supervised-deep-learning-algorithm-master/filled.png"
+]
+
+
+k = Network(shape=(256,15,15,1))
+
+
+data = all_data(urls)
+
+k.xs = np.array( data )
+k.ys = np.array([ [[0]],[[1]] ])
+
+
+tot_cost = np.array(k.lower_cost(1000))
+time = np.arange(1000)
+
+plt.plot(time,tot_cost)
 
 
 
