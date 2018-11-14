@@ -58,8 +58,8 @@ class Network:
     def lower_cost(self,xs,ys):
         for x,y in zip(xs,ys):
             d_w,d_b = self.gradient(x,y)
-            for w,b in zip(d_w,d_b):
-                self.ws -= w
-                self.bs -= b
+            for L in range(len(self.shape)):
+                self.ws[L] -= d_w[L]
+                self.bs[L] -= d_b[L]
 
 
