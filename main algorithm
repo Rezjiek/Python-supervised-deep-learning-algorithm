@@ -45,7 +45,7 @@ class Network:
             all_dz.append(self.d_f(z))
 
         dc_dx = all_x[-1]
-        L = len(self.shape)-1
+        L = len(self.shape)-2
         while L >= 0:
             self.b_grad[L] = dc_dx*all_dz[L]
             self.w_grad[L] = self.b_grad[L]@all_x[L].T
