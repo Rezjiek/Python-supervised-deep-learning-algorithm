@@ -12,7 +12,10 @@ def d_sig(x):
 
 class Network:
 
-    def __init__(self,shape=()):
+    def __init__(self,shape=(),f=sig,d_f=d_sig):
+        self.f = f
+        self.d_f = d_f
+
         self.shape = shape
 
         self.ws = [np.ones((i,j)) for i,j in zip(shape[1:],shape)]
