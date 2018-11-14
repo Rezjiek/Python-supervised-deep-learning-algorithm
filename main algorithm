@@ -1,0 +1,55 @@
+import data
+import numpy as np
+import matplotlib.pyplot as plt
+
+
+def sig(x):
+    return 1/(1+np.exp(-x))
+
+def d_sig(x):
+    return sig(x)*(1-sig(x))
+
+
+class Network:
+
+    def __init__(self,shape=()):
+        self.shape = shape
+
+        self.ws = [np.ones((i,j)) for i,j in zip(shape[1:],shape)]
+        self.bs = [np.ones((i,1)) for i in shape[1:]]
+
+        self.w_grad = [np.ones((i,j)) for i,j in zip(shape[1:],shape)]
+        self.b_grad = [np.ones((i,1)) for i in shape[1:]]
+
+
+    def neur_sum(self,x):
+        for w,b in zip(self.ws,self.bs):
+            x = self.f(w@x+b)
+        return x
+
+
+    def cost(self,xs,ys):
+        return np.sum((self.neur_sum(xs)-ys)**2)/(len(xs)*len(ys[0]))
+
+
+    def gradient(self,x,y):
+        all_x = [x]
+        all_dz = []
+
+        for w,b in zip(self.ws,self.bs):
+            z = w@all_x[-1]+b
+            all_x.append(self.f(z))
+            all_dz.append(self.d_f(z))
+
+        dc_dx = all_x[-1]
+        L = len(self.shape)-1
+        while L >= 0:
+            self.b_grad[L] = dc_dx*all_dz[L]
+            self.w_grad[L] = self.b_grad[L]@all_x[L].T
+            dc_dx = self.ws[L].T@(dc_dx*all_dz[L])
+        
+        return self.w_grad,self.b_grad
+
+
+
+
