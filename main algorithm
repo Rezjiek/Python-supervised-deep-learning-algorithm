@@ -51,5 +51,11 @@ class Network:
         return self.w_grad,self.b_grad
 
 
+    def lower_cost(self,xs,ys):
+        for x,y in zip(xs,ys):
+            d_w,d_b = self.gradient(x,y)
+            for w,b in zip(d_w,d_b):
+                self.ws -= w
+                self.bs -= b
 
 
