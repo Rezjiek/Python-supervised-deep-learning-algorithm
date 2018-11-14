@@ -50,6 +50,7 @@ class Network:
             self.b_grad[L] = dc_dx*all_dz[L]
             self.w_grad[L] = self.b_grad[L]@all_x[L].T
             dc_dx = self.ws[L].T@(dc_dx*all_dz[L])
+            L -= 1
         
         return self.w_grad,self.b_grad
 
