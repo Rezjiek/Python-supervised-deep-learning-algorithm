@@ -1,6 +1,8 @@
 import data
 import numpy as np
+import random
 import matplotlib.pyplot as plt
+import time
 
 
 def sig(x):
@@ -20,25 +22,31 @@ def d_sqrt_cost(x,y):
 class Network:
 
     def __init__(self,shape=(),f=sig,d_f=d_sig,cost_f=sqrt_cost,cost_d_f=d_sqrt_cost):
+        self.cost_f = cost_f
+        self.cost_d_f = cost_d_f
+
         self.f = f
         self.d_f = d_f
 
         self.shape = shape
 
-        self.ws = [np.ones((i,j)) for i,j in zip(shape[1:],shape)]
-        self.bs = [np.ones((i,1)) for i in shape[1:]]
-
-        self.w_grad = [np.ones((i,j)) for i,j in zip(shape[1:],shape)]
-        self.b_grad = [np.ones((i,1)) for i in shape[1:]]
-
+        self.ws = [np.zeros((i,j)) for i,j in zip(shape[1:],shape)]
+        self.bs = [np.zeros((i,1)) for i in shape[1:]]
 
     def neur_sum(self,x):
         for w,b in zip(self.ws,self.bs):
             x = self.f(w@x+b)
         return x
 
-    def cost(self,xs,ys):
-        return np.sum(self.cost_f(self.neur_sum(xs),ys))/(len(xs)*len(ys[0]))
+    def cost(self,batch):
+        return np.sum(np.array([self.cost_f(self.neur_sum(x),y) for x,y in batch]))/(len(batch)*len(batch[0][1]))
+
+    def evaluate(self,batch):
+        out = 0
+        for x,y in batch:
+            n = np.argmax(self.neur_sum(x)-y)
+            out += 1-y[n]
+        return out/len(batch)
 
     def gradient(self,x,y):
         all_x = [x]
@@ -49,22 +57,64 @@ class Network:
             all_x.append(self.f(z))
             all_dz.append(self.d_f(z))
 
-        dc_dx = cost_d_f(all_x[-1],y)
+        dc_dx = self.cost_d_f(all_x[-1],y)
         L = len(self.shape)-2
         while L >= 0:
-            self.b_grad[L] = dc_dx*all_dz[L]
-            self.w_grad[L] = self.b_grad[L]@all_x[L].T
+            db = dc_dx*all_dz[L]
+            dw = db@all_x[L].T
             dc_dx = self.ws[L].T@(dc_dx*all_dz[L])
             L -= 1
-        
-        return self.w_grad,self.b_grad
+            yield dw,db,L+1
 
-    def lower_cost(self,xs,ys):
-        for x,y in zip(xs,ys):
-            d_w,d_b = self.gradient(x,y)
-            for L in range(len(self.shape)-1):
-                self.ws[L] -= d_w[L]
-                self.bs[L] -= d_b[L]
+    def update_batch(self,batch,c):
+        batch_len = len(batch)
+        for x,y in batch:
+            n = c/batch_len
+            for ddw,ddb,L in self.gradient(x,y):
+                self.ws[L] -= ddw*n
+                self.bs[L] -= ddb*n
+
+    def training(self,data,batch_size,loops,c):
+        n = len(data)
+        for i in range(loops):
+            random.shuffle(data)
+            batches = [data[k:k+batch_size] for k in range(0,n,batch_size)]
+            for batch in batches:
+                self.update_batch(batch,c)
 
 
 
+
+
+
+
+
+
+
+
+def cross_e(x,y):
+    return -y*np.log(x)-(1-y)*np.log(1-x)
+
+
+def d_cross_e(x,y):
+    return -y/x+(1-y)/(1-x)
+
+
+
+i_data = data.all_data[:1000]
+
+
+test = Network(shape=(784,15,10),cost_f=cross_e,cost_d_f=d_cross_e)
+'''
+graph = []
+for i in range(100):
+    graph.append(test.cost(i_data))
+    test.training(i_data,100,100,1)
+
+plt.plot(graph)
+plt.show()
+
+
+
+
+'''
