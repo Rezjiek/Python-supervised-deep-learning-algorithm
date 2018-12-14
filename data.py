@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import mnist
 
 
-data = mnist.MNIST('D:\programmeren\python\Machine learning\data')
+data = mnist.MNIST('path of your data')
 data.gz = True
 images,labels = data.load_training()
 
