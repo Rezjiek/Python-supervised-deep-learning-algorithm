@@ -44,9 +44,9 @@ class Network:
     def evaluate(self,batch):
         out = 0
         for x,y in batch:
-            n = np.argmax(self.neur_sum(x)-y)
+            n = np.argmin(self.cost_f(self.neur_sum(x),y))
             out += 1-y[n]
-        return out/len(batch)
+        return float(out)/float(len(batch))
 
     def gradient(self,x,y):
         all_x = [x]
@@ -76,11 +76,15 @@ class Network:
 
     def training(self,data,batch_size,loops,c):
         n = len(data)
+        graph = [test.cost(data)]
         for i in range(loops):
             random.shuffle(data)
             batches = [data[k:k+batch_size] for k in range(0,n,batch_size)]
             for batch in batches:
                 self.update_batch(batch,c)
+            graph.append(test.cost(data))
+        plt.plot(graph)
+        plt.show()
 
 
 
@@ -105,16 +109,10 @@ i_data = data.all_data[:1000]
 
 
 test = Network(shape=(784,15,10),cost_f=cross_e,cost_d_f=d_cross_e)
-'''
-graph = []
-for i in range(100):
-    graph.append(test.cost(i_data))
-    test.training(i_data,100,100,1)
-
-plt.plot(graph)
-plt.show()
-
-
-
 
 '''
+test.training(i_data,100,500,1)
+'''
+
+
+
