@@ -30,8 +30,8 @@ class Network:
 
         self.shape = shape
 
-        self.ws = [np.zeros((i,j)) for i,j in zip(shape[1:],shape)]
-        self.bs = [np.zeros((i,1)) for i in shape[1:]]
+        self.ws = [np.random.uniform(-5,5,size=(i,j)) for i,j in zip(shape[1:],shape)]
+        self.bs = [np.random.uniform(-5,5,size=(i,1)) for i in shape[1:]]
 
     def neur_sum(self,x):
         for w,b in zip(self.ws,self.bs):
@@ -44,9 +44,9 @@ class Network:
     def evaluate(self,batch):
         out = 0
         for x,y in batch:
-            n = np.argmin(self.cost_f(self.neur_sum(x),y))
-            out += 1-y[n]
-        return float(out)/float(len(batch))
+            n = np.argmax(self.neur_sum(x))
+            out += 1-y[n][0]
+        return out/len(batch)
 
     def gradient(self,x,y):
         all_x = [x]
@@ -76,13 +76,13 @@ class Network:
 
     def training(self,data,batch_size,loops,c):
         n = len(data)
-        graph = [test.cost(data)]
+        graph = [test.evaluate(data)]
         for i in range(loops):
             random.shuffle(data)
             batches = [data[k:k+batch_size] for k in range(0,n,batch_size)]
             for batch in batches:
                 self.update_batch(batch,c)
-            graph.append(test.cost(data))
+            graph.append(test.evaluate(data))
         plt.plot(graph)
         plt.show()
 
@@ -105,14 +105,10 @@ def d_cross_e(x,y):
 
 
 
-i_data = data.all_data[:1000]
+i_data = data.all_data[:5000]
 
 
 test = Network(shape=(784,15,10),cost_f=cross_e,cost_d_f=d_cross_e)
 
-'''
-test.training(i_data,100,500,1)
-'''
 
-
-
+test.training(i_data,500,50,1)
